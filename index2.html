@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Sign Language Translator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+    <!-- Custom Theme (Based on Accessibility Standards) -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#0D9488', // Teal (Trust/Clarity)
+                        secondary: '#F59E0B', // Amber (Attention)
+                        neutral: '#1F2937',
+                        light: '#F8FAFC'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto { content-visibility: auto; }
+            .btn-action { @apply bg-primary hover:bg-primary/90 text-white font-bold py-3 px-6 rounded-xl transition-all shadow-lg; }
+            .card { @apply bg-white rounded-2xl shadow-md p-5 border border-gray-100; }
+        }
+    </style>
+</head>
+<body class="bg-light min-h-screen">
+    <div class="container mx-auto px-4 py-6 max-w-4xl">
+
+        <!-- Header -->
+        <header class="text-center mb-10">
+            <h1 class="text-[clamp(1.8rem,4vw,3rem)] font-bold text-primary mb-2">🤟 AI Sign Language Translator</h1>
+            <p class="text-neutral/70">AI-Enabled Tool for Inclusive Communication | HCI Research Project</p>
+        </header>
+
+        <!-- Role Selection (From Survey Question 1) -->
+        <section id="roleSection" class="card mb-8">
+            <h2 class="text-xl font-semibold mb-5 text-center">Select Your Profile</h2>
+            <div class="grid md:grid-cols-3 gap-4">
+                <button onclick="setRole('deaf')" class="btn-action flex items-center justify-center gap-2">
+                    <i class="fa fa-deaf"></i> Deaf / Hard-of-Hearing
+                </button>
+                <button onclick="setRole('hearing')" class="btn-action flex items-center justify-center gap-2">
+                    <i class="fa fa-volume-up"></i> Hearing User
+                </button>
+                <button onclick="setRole('educator')" class="btn-action flex items-center justify-center gap-2">
+                    <i class="fa fa-graduation-cap"></i> Educator / Admin
+                </button>
+            </div>
+        </section>
+
+        <!-- Main Translation Module -->
+        <section id="translatorSection" class="card hidden">
+            <div class="flex justify-between items-center mb-5">
+                <h2 id="roleTitle" class="text-xl font-semibold">Real-Time Translation</h2>
+                <button onclick="resetView()" class="text-primary hover:underline">Change Role</button>
+            </div>
+
+            <!-- Camera Feed Area -->
+            <div class="relative bg-gray-900 rounded-xl overflow-hidden mb-6 aspect-video flex items-center justify-center text-white">
+                <video id="webcam" autoplay playsinline muted class="w-full h-full object-cover hidden"></video>
+                <canvas id="canvas" class="absolute top-0 left-0 w-full h-full"></canvas>
+                <div id="cameraPrompt" class="text-center p-4">
+                    <i class="fa fa-camera text-5xl mb-3 opacity-70"></i>
+                    <p>Click below to start sign recognition</p>
+                </div>
+            </div>
+
+            <!-- Control Buttons -->
+            <div class="grid md:grid-cols-2 gap-4 mb-6">
+                <button id="startBtn" onclick="startRecognition()" class="btn-action">
+                    <i class="fa fa-play"></i> Start Translation
+                </button>
+                <button onclick="stopRecognition()" class="bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-6 rounded-xl transition-all">
+                    <i class="fa fa-stop"></i> Stop
+                </button>
+            </div>
+
+            <!-- Output Panel -->
+            <div class="bg-gray-50 rounded-xl p-4 min-h-[120px] border border-gray-200">
+                <h3 class="font-bold mb-2 text-primary">Translation Result:</h3>
+                <p id="outputText" class="text-lg text-neutral/80">Waiting for input...</p>
+            </div>
+        </section>
+
+        <!-- Research Info Panel -->
+        <section class="card mt-8">
+            <h3 class="font-bold text-lg mb-3">Project Background</h3>
+            <ul class="space-y-2 text-neutral/80">
+                <li>🌍 466M+ people globally have hearing impairment (WHO, 2023)</li>
+                <li>🇵🇭 ~300,000 affected individuals in Philippines</li>
+                <li>⚙️ Technology: CNN + Computer Vision + Agile Development</li>
+                <li>✅ 96.7% of survey respondents willing to recommend this tool</li>
+            </ul>
+        </section>
+    </div>
+
+    <script>
+        let selectedRole = "";
+        let stream = null;
+
+        // Set User Role
+        function setRole(role) {
+            selectedRole = role;
+            document.getElementById('roleSection').classList.add('hidden');
+            document.getElementById('translatorSection').classList.remove('hidden');
+            
+            // Update UI based on role
+            const titles = {
+                deaf: "Sign → Text/Speech",
+                hearing: "Speech/Text → Sign",
+                educator: "System Monitoring & Database"
+            };
+            document.getElementById('roleTitle').textContent = titles[role];
+        }
+
+        // Access Webcam
+        async function startRecognition() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { width: 1280, height: 720 }, 
+                    audio: false 
+                });
+                const videoEl = document.getElementById('webcam');
+                videoEl.srcObject = stream;
+                videoEl.classList.remove('hidden');
+                document.getElementById('cameraPrompt').classList.add('hidden');
+                
+                // SIMULATION: Mimic AI recognition output
+                simulateTranslation();
+
+            } catch (err) {
+                alert("Camera access denied. Please enable permissions.");
+            }
+        }
+
+        // Simulate Real-Time Results (Replace with CNN Model API later)
+        function simulateTranslation() {
+            const phrases = [
+                "Hello / Kamusta", "Thank You / Salamat", 
+                "How are you?", "Goodbye / Paalam"
+            ];
+            let counter = 0;
+            
+            window.translationInterval = setInterval(() => {
+                document.getElementById('outputText').textContent = phrases[counter % phrases.length];
+                counter++;
+            }, 3000);
+        }
+
+        function stopRecognition() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                document.getElementById('webcam').classList.add('hidden');
+                document.getElementById('cameraPrompt').classList.remove('hidden');
+            }
+            clearInterval(window.translationInterval);
+            document.getElementById('outputText').textContent = "Stopped.";
+        }
+
+        function resetView() {
+            stopRecognition();
+            document.getElementById('translatorSection').classList.add('hidden');
+            document.getElementById('roleSection').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
